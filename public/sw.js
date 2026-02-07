@@ -1,16 +1,19 @@
-importScripts("/scram/scramjet.all.js");
+importScripts('/scram/scramjet.all.js');
 
-const { ScramjetServiceWorker } = $scramjetLoadWorker();
-const scramjet = new ScramjetServiceWorker();
+const scramjet = new ScramjetController({
+    prefix: '/sj/', 
+    files: {
+        wasm: '/scram/scramjet.wasm.wasm',
+        all: '/scram/scramjet.all.js',
+    },
+    transport: {
+        wisp: 'wss://wisp.mercurywork.shop/'
+    }
+});
 
-async function handleRequest(event) {
-	await scramjet.loadConfig();
-	if (scramjet.route(event)) {
-		return scramjet.fetch(event);
-	}
-	return fetch(event.request);
-}
-
-self.addEventListener("fetch", (event) => {
-	event.respondWith(handleRequest(event));
+self.addEventListener('fetch', (event) => {
+    // This catches any request with /sj/ and unblocks it
+    if (event.request.url.includes('/sj/')) {
+        event.respondWith(scramjet.fetch(event));
+    }
 });
